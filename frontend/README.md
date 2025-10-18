@@ -1,16 +1,21 @@
-# React + Vite
+# StudyPal AI Frontend Template
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 application scaffolded with React Router, ready for you to plug in authentication, task management, AI planning, and analytics features.
 
-Currently, two official plugins are available:
+## Available Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm run dev      # start the dev server (http://localhost:5173)
+npm run build    # production build output to dist/
+npm run preview  # serve the production build locally
+npm run lint     # run ESLint
+```
 
-## React Compiler
+## Key Files
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `src/pages/*` – placeholder pages aligned with the backlog (Dashboard, Tasks, AI Planner, Analytics, Settings, Auth screens).
+- `src/layouts/DashboardLayout.jsx` – shell containing sidebar + header; injects page content via `<Outlet />`.
+- `src/context/AuthContext.jsx` – minimal auth state; replace with real logic once backend is ready.
+- `src/components/PlaceholderCard.jsx` – drop-in component used as a reminder of what to build next.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Adjust styling, add state management, or integrate UI libraries as your project evolves.

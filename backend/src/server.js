@@ -1,12 +1,19 @@
-const express = require('express')
+require('dotenv').config()
+const createApp = require('./app')
+const { connect } = require('./db')
 
-const app = express()
 const PORT = Number.parseInt(process.env.PORT ?? '5000', 10)
 
-app.get('/', (_req, res) => {
-  res.json({ message: 'StudyPal backend is ready!' })
-})
+async function start() {
+  await connect()
+  const app = createApp()
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`)
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`)
+  })
+}
+
+start().catch((error) => {
+  console.error('Failed to start server:', error)
+  process.exit(1)
 })

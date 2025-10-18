@@ -1,1 +1,8 @@
 todo_list.md
+node_modules/
+*.log
+.env
+.env.*
+dist/
+backend/node_modules/
+frontend/node_modules/

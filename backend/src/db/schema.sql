@@ -1,0 +1,46 @@
+-- StudyPal AI - Starter schema
+-- Adjust fields and constraints to match your final requirements.
+
+create table if not exists users (
+   id            serial primary key,
+   name          text not null,
+   email         text unique not null,
+   password_hash text,
+   role          text default 'student',
+   created_at    timestamptz default now()
+);
+
+create table if not exists tasks (
+   id              serial primary key,
+   user_id         integer not null
+      references users ( id )
+         on delete cascade,
+   title           text not null,
+   description     text,
+   priority        text default 'medium',
+   status          text default 'pending',
+   due_date        timestamptz,
+   estimated_hours numeric(5,2),
+   created_at      timestamptz default now(),
+   updated_at      timestamptz default now()
+);
+
+create table if not exists task_history (
+   id              serial primary key,
+   task_id         integer not null
+      references tasks ( id )
+         on delete cascade,
+   previous_status text,
+   new_status      text,
+   changed_at      timestamptz default now()
+);
+
+create table if not exists ai_plans (
+   id         serial primary key,
+   user_id    integer not null
+      references users ( id )
+         on delete cascade,
+   prompt     text,
+   response   jsonb,
+   created_at timestamptz default now()
+);
