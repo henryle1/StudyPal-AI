@@ -7,7 +7,11 @@ const registerRoutes = require('./routes')
 function createApp() {
   const app = express()
 
-  app.use(cors({ origin: '*' }))
+  app.use(cors({
+    origin: '*',
+    methods: '*',
+    allowedHeaders: '*'
+  }))
   app.use(express.json())
 
   // Health check - keep for uptime monitoring
