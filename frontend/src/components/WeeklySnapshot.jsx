@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { API_URL } from '../config.js'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '')
-const STATS_ENDPOINT = `${API_BASE_URL}/api/stats/overview`
+const STATS_ENDPOINT = `${API_URL}/api/stats/overview`
 
 function WeeklySnapshot() {
   const [snapshot, setSnapshot] = useState(null)

@@ -3,22 +3,54 @@ import { useState } from 'react'
 
 import '../App.css'
 import { useAuthContext } from '../context/AuthContext.jsx'
+import { API_URL } from '../config.js'
 
 function Register() {
   const navigate = useNavigate()
   const { login } = useAuthContext()
   const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((prev) => ({ ...prev, [name]: value }))
+    setError('')
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    // TODO: Replace with API call to /api/auth/register
-    login({ id: 'new-user', name: form.name || 'New Student', email: form.email })
-    navigate('/app', { replace: true })
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed')
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('token', data.token)
+
+      // Update auth context
+      login(data.user)
+
+      // Navigate to dashboard
+      navigate('/app', { replace: true })
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -28,6 +60,7 @@ function Register() {
           <h1>Create your StudyPal</h1>
           <p>We will guide you through tailored study plans and analytics.</p>
         </header>
+        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="input-field">
             <label htmlFor="name">Name</label>
@@ -65,8 +98,8 @@ function Register() {
               required
             />
           </div>
-          <button type="submit" className="primary-btn">
-            Sign up
+          <button type="submit" className="primary-btn" disabled={loading}>
+            {loading ? 'Signing up...' : 'Sign up'}
           </button>
         </form>
         <p className="link-text">

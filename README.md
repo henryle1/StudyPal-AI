@@ -10,19 +10,50 @@ This repository provides a starter scaffold that mirrors the deliverables outlin
 
 ## Getting Started
 
+### Backend Setup
+
 ```bash
-# Backend
 cd backend
 npm install
-npm run dev
 
-# Frontend (in a separate shell)
-cd frontend
-npm install
+# Create .env file with your database credentials and port
+cat > .env << EOF
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=studypal
+PGUSER=postgres
+PGPASSWORD=your_postgres_password
+
+PORT=5001
+JWT_SECRET=your-secret-key-change-this-in-production
+JWT_EXPIRES_IN=7d
+EOF
+
+# Initialize database tables
+node src/db/init.js
+
+# Start the server
 npm run dev
 ```
 
-The backend listens on `http://localhost:5000` by default, while the frontend runs on `http://localhost:5173`.
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+
+# Create .env file with backend API URL
+cat > .env << EOF
+VITE_API_URL=http://localhost:5001
+EOF
+
+# Start the dev server
+npm run dev
+```
+
+The backend listens on `http://localhost:5001` by default, while the frontend runs on `http://localhost:5173`.
+
+**Note**: Each developer can customize their port by changing `PORT` in `backend/.env` and `VITE_API_URL` in `frontend/.env`.
 
 ## Where to Implement Next
 
