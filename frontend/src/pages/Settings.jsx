@@ -380,7 +380,7 @@ function Settings() {
         )}
       </section>
 
-      <section className="settings-card">
+      {/* <section className="settings-card">
         <header className="settings-header">
           <div>
             <p className="settings-eyebrow">Integrations</p>
@@ -461,7 +461,7 @@ function Settings() {
             </div>
           </form>
         )}
-      </section>
+      </section> */}
     </div>
   )
 }
