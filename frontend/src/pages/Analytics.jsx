@@ -345,7 +345,7 @@ function Analytics() {
           ))}
         </div>
 
-        <div className="badge-grid">
+        {/* <div className="badge-grid">
           {milestoneBadges.map((badge, index) => (
             <article key={`${badge.title}-${index}`} className={`badge-card ${badge.earned ? 'earned' : ''}`}>
               <span className="badge-icon" style={{ background: badge.color }}>
@@ -358,7 +358,7 @@ function Analytics() {
               <span className="badge-status">{badge.earned ? 'Unlocked' : 'In progress'}</span>
             </article>
           ))}
-        </div>
+        </div> */}
       </section>
     </div>
   )
