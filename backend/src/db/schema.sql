@@ -44,3 +44,25 @@ create table if not exists ai_plans (
    response   jsonb,
    created_at timestamptz default now()
 );
+
+create table if not exists user_profiles (
+   user_id      integer primary key
+      references users ( id )
+         on delete cascade,
+   full_name    text,
+   timezone     text,
+   pronouns     text,
+   notifications jsonb default '{}'::jsonb,
+   updated_at   timestamptz default now()
+);
+
+create table if not exists user_integrations (
+   user_id        integer primary key
+      references users ( id )
+         on delete cascade,
+   gemini_key     text,
+   calendar_key   text,
+   sync_calendar  boolean default false,
+   auto_push_tasks boolean default true,
+   updated_at     timestamptz default now()
+);
