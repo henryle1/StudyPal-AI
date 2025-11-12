@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { API_URL } from '../config.js'
-
-const STATS_ENDPOINT = `${API_URL}/api/stats/overview`
 
 function WeeklySnapshot() {
   const [snapshot, setSnapshot] = useState(null)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState(null)
-  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -16,68 +13,50 @@ function WeeklySnapshot() {
       setStatus('loading')
       setError(null)
       try {
-        const response = await fetch(STATS_ENDPOINT, { signal: controller.signal })
-        if (!response.ok) {
-          throw new Error(`Request failed (${response.status})`)
-        }
-        const payload = await response.json()
-        setSnapshot(payload)
+        const response = await fetch(`${API_URL}/api/stats/overview`, { signal: controller.signal })
+        if (!response.ok) throw new Error(`Request failed (${response.status})`)
+        setSnapshot(await response.json())
         setStatus('success')
       } catch (err) {
-        if (err.name === 'AbortError') {
-          return
+        if (err.name !== 'AbortError') {
+          setError(err.message || 'Unable to load stats')
+          setStatus('error')
         }
-        setError(err.message || 'Unable to load stats')
-        setStatus('error')
       }
     }
 
     loadSnapshot()
-
     return () => controller.abort()
-  }, [refreshKey])
+  }, [])
 
-  const weeklySummary = useMemo(() => {
-    if (!snapshot) return null
-    const weekStart = snapshot.weeklyProgress?.[0]?.label
-    const weekEnd = snapshot.weeklyProgress?.[snapshot.weeklyProgress.length - 1]?.label
-    return {
-      focusMinutes: snapshot.weeklyFocusMinutes ?? 0,
-      taskProgress: `${snapshot.totals.completedTasks}/${snapshot.totals.totalTasks} tasks done`,
-      window: weekStart && weekEnd ? `${weekStart} to ${weekEnd}` : null
-    }
-  }, [snapshot])
+  if (status === 'loading') {
+    return (
+      <section className="snapshot-section">
+        <div className="snapshot-placeholder">Loading...</div>
+      </section>
+    )
+  }
 
-  const streakCard = snapshot
-    ? {
-        value: `${snapshot.streakDays} days`,
-        subtitle: `Longest: ${snapshot.streak.longest} days`,
-        context: snapshot.streak.lastMissedDay
-          ? `Last miss: ${new Date(snapshot.streak.lastMissedDay).toLocaleDateString(undefined, {
-              weekday: 'short'
-            })}`
-          : 'Perfect record this week'
-      }
-    : null
-  const completionValue =
-    snapshot && typeof snapshot.weeklyCompletionRate === 'number'
-      ? `${snapshot.weeklyCompletionRate.toFixed(1)}%`
-      : '--'
-  const completionMeta = snapshot
-    ? `${snapshot.totals.completedTasks}/${snapshot.totals.totalTasks} tasks closed`
-    : ''
+  if (status === 'error') {
+    return (
+      <section className="snapshot-section">
+        <div className="snapshot-error">
+          <span>Failed to load stats: {error}</span>
+          <button type="button" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
+      </section>
+    )
+  }
 
-  const xp = snapshot?.gamification
-  const xpValue = xp ? xp.xp.toLocaleString() : '--'
-  const xpProgress = xp?.progressPercent ?? 0
-  const xpMeta =
-    xp && typeof xp.xpIntoLevel === 'number' && typeof xp.xpPerLevel === 'number'
-      ? `${xp.xpIntoLevel} / ${xp.xpPerLevel} XP to next level`
-      : ''
-  const summaryDescription = weeklySummary
-    ? `${weeklySummary.focusMinutes} focus minutes logged${
-        weeklySummary.window ? ` | ${weeklySummary.window}` : ''
-      }`
+  if (!snapshot) return null
+
+  const { totals, completionRate, weeklyFocusMinutes, weeklyProgress, streakDays, streak, gamification } = snapshot
+  const weekStart = weeklyProgress?.[0]?.label
+  const weekEnd = weeklyProgress?.[weeklyProgress.length - 1]?.label
+  const lastMiss = streak.lastMissedDay
+    ? new Date(streak.lastMissedDay).toLocaleDateString(undefined, { weekday: 'short' })
     : null
 
   return (
@@ -86,71 +65,45 @@ function WeeklySnapshot() {
         <div>
           <p className="snapshot-eyebrow">Weekly Snapshot</p>
           <h2 className="snapshot-title">Momentum check-in</h2>
-          {summaryDescription && <p className="snapshot-description">{summaryDescription}</p>}
+          <p className="snapshot-description">
+            {weeklyFocusMinutes} focus minutes logged | {weekStart} to {weekEnd}
+          </p>
         </div>
-        {weeklySummary && <span className="snapshot-pill">{weeklySummary.taskProgress}</span>}
       </header>
 
-      {status === 'loading' && <div className="snapshot-placeholder">Syncing analytics...</div>}
-
-      {status === 'error' && (
-        <div className="snapshot-error">
-          <div>
-            <strong>Couldn't load stats.</strong>
-            <p>{error}</p>
+      <div className="snapshot-grid">
+        <article className="snapshot-card snapshot-card-merged">
+          <div className="snapshot-merged-section">
+            <p className="snapshot-label">Completion rate</p>
+            <p className="snapshot-value">{completionRate.toFixed(1)}%</p>
+            <p className="snapshot-subtext">{totals.completedTasks}/{totals.totalTasks} tasks closed</p>
           </div>
-          <button type="button" onClick={() => setRefreshKey((prev) => prev + 1)}>
-            Retry
-          </button>
-        </div>
-      )}
-
-      {status === 'success' && snapshot && (
-        <>
-          <div className="snapshot-grid">
-            <article className="snapshot-card">
-              <p className="snapshot-label">Completion rate</p>
-              <p className="snapshot-value">{completionValue}</p>
-              <p className="snapshot-subtext">{completionMeta}</p>
-            </article>
-
-            <article className="snapshot-card">
-              <p className="snapshot-label">Streak</p>
-              <p className="snapshot-value">{streakCard?.value}</p>
-              <p className="snapshot-subtext">{streakCard?.subtitle}</p>
-              <p className="snapshot-meta">{streakCard?.context}</p>
-            </article>
-
-            <article className="snapshot-card">
-              <p className="snapshot-label">XP progress</p>
-              <p className="snapshot-value">{xpValue} XP</p>
-              <p className="snapshot-subtext">Level {xp?.level ?? '--'}</p>
-              <div
-                className="snapshot-progress-track"
-                role="progressbar"
-                aria-valuemin="0"
-                aria-valuemax="100"
-                aria-valuenow={xpProgress}
-              >
-                <div
-                  className="snapshot-progress-fill"
-                  style={{ width: `${xpProgress}%` }}
-                />
-              </div>
-              <p className="snapshot-meta">{xpMeta}</p>
-              {!!xp?.achievements?.length && (
-                <div className="snapshot-tags">
-                  {xp.achievements.map((achievement) => (
-                    <span key={achievement} className="snapshot-tag">
-                      {achievement}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </article>
+          <div className="snapshot-merged-divider"></div>
+          <div className="snapshot-merged-section">
+            <p className="snapshot-label">Streak</p>
+            <p className="snapshot-value">{streakDays} days</p>
+            <p className="snapshot-subtext">Longest: {streak.longest} days</p>
+            {lastMiss && <p className="snapshot-meta">Last miss: {lastMiss}</p>}
           </div>
-        </>
-      )}
+        </article>
+
+        <article className="snapshot-card">
+          <p className="snapshot-label">XP progress</p>
+          <p className="snapshot-value">{gamification.xp} XP</p>
+          <p className="snapshot-subtext">Level {gamification.level}</p>
+          <div className="snapshot-progress-track">
+            <div className="snapshot-progress-fill" style={{ width: `${gamification.progressPercent}%` }} />
+          </div>
+          <p className="snapshot-meta">{gamification.xpIntoLevel} / {gamification.xpPerLevel} XP to next level</p>
+          {gamification.achievements?.length > 0 && (
+            <div className="snapshot-tags">
+              {gamification.achievements.map((achievement) => (
+                <span key={achievement} className="snapshot-tag">{achievement}</span>
+              ))}
+            </div>
+          )}
+        </article>
+      </div>
     </section>
   )
 }
