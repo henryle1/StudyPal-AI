@@ -177,11 +177,7 @@ function Analytics() {
       <section className="analytics-card">
         <header className="analytics-header">
           <div>
-            <p className="analytics-eyebrow">Progress trends</p>
-            <h3>Where your effort is compounding</h3>
-            <p className="analytics-subtitle">
-              Weekly completion rate, cumulative focus hours, and quick ratios keep you on track.
-            </p>
+            <h3>Progress trends</h3>
           </div>
           <div className="analytics-badge">Last {weeklyProgress.length || 0} days</div>
         </header>
@@ -293,73 +289,6 @@ function Analytics() {
         </div>
       </section>
 
-      <section className="analytics-card">
-        <header className="analytics-header">
-          <div>
-            <p className="analytics-eyebrow">Milestones & streaks</p>
-            <h3>Celebrate the wins that keep you consistent</h3>
-            <p className="analytics-subtitle">
-              Levels, streak stats, and badges align with your motivation loops.
-            </p>
-          </div>
-        </header>
-
-        <div className="streak-grid">
-          <div className="streak-card">
-            <p className="streak-label">Current streak</p>
-            <h4>{streaks.current} days</h4>
-            <p className="streak-meta">Best streak: {streaks.best} days.</p>
-            <div className="streak-progress">
-              <div
-                className="streak-progress-fill"
-                style={{ width: `${Math.min((streaks.current / (streaks.best || 1)) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="streak-card">
-            <p className="streak-label">Latest pace</p>
-            <h4>
-              {streaks.onTrack}/{streaks.goal} tasks
-            </h4>
-            <p className="streak-meta">Keep momentum for the weekly badge.</p>
-            <div className="streak-progress">
-              <div
-                className="streak-progress-fill accent"
-                style={{ width: `${Math.min((streaks.onTrack / Math.max(streaks.goal, 1)) * 100, 100)}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="level-timeline">
-          {levelBreakpoints.map((level, index) => (
-            <div key={level.label} className="level-step">
-              <div className="level-dot" />
-              <div>
-                <p>{level.label}</p>
-                <small>{level.target} total hours</small>
-              </div>
-              {index !== levelBreakpoints.length - 1 && <span className="level-connector" />}
-            </div>
-          ))}
-        </div>
-
-        {/* <div className="badge-grid">
-          {milestoneBadges.map((badge, index) => (
-            <article key={`${badge.title}-${index}`} className={`badge-card ${badge.earned ? 'earned' : ''}`}>
-              <span className="badge-icon" style={{ background: badge.color }}>
-                {badge.icon}
-              </span>
-              <div>
-                <h5>{badge.title}</h5>
-                <p>{badge.description}</p>
-              </div>
-              <span className="badge-status">{badge.earned ? 'Unlocked' : 'In progress'}</span>
-            </article>
-          ))}
-        </div> */}
-      </section>
     </div>
   )
 }

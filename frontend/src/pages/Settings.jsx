@@ -262,11 +262,11 @@ function Settings() {
 
   return (
     <div className="settings-grid">
-      <section className="settings-card">
+      <div className="settings-container">
+        <section className="settings-card">
         <header className="settings-header">
           <div>
-            <p className="settings-eyebrow">Profile settings</p>
-            <h3>Keep your StudyPal profile current</h3>
+            <h3>Profile settings</h3>
             <p className="settings-subtitle">Manage identity details, timezone, and notifications.</p>
           </div>
           <span className="settings-status">{profile.timezone}</span>
@@ -318,7 +318,7 @@ function Settings() {
             </label>
 
             <div className="settings-section">
-              <p className="section-label">Notifications</p>
+              <h3>Notifications</h3>
               <div className="toggle-grid">
                 <Toggle
                   label="Weekly progress digest"
@@ -462,6 +462,7 @@ function Settings() {
           </form>
         )}
       </section> */}
+      </div>
     </div>
   )
 }

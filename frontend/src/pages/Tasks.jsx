@@ -236,11 +236,7 @@ function Tasks() {
       <section className="tasks-card">
         <header className="tasks-card-header">
           <div>
-            <p className="tasks-eyebrow">Task list</p>
-            <h3>Progress overview</h3>
-            <p className="tasks-subtitle">
-              Filter by status, priority, or search to stay organized. Progress updates in real time.
-            </p>
+            <h3 className="tasks-eyebrow">Task list</h3>
           </div>
           <div className="tasks-progress">
             <span>{completedCount}/{tasks.length} tasks completed</span>

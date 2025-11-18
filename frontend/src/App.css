@@ -164,12 +164,12 @@
 
 .snapshot-section {
   background: #ffffff;
-  border-radius: 18px;
-  padding: 1.75rem;
+  border-radius: 14px;
+  padding: 0.85rem 1.1rem;
   border: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.65rem;
 }
 
 .snapshot-header {
@@ -180,34 +180,37 @@
 }
 
 .snapshot-eyebrow {
-  margin: 0 0 0.15rem;
+  margin: 0 0 0.05rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.78rem;
+  font-size: 11px;
   color: #64748b;
 }
 
 .snapshot-title {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 18px;
+  font-weight: 700;
   color: #0f172a;
 }
 
 .snapshot-description {
-  margin: 0.25rem 0 0;
+  margin: 0.1rem 0 0;
   color: #475569;
-  font-size: 0.95rem;
+  font-size: 13px;
 }
+
 
 .settings-grid {
-  display: grid;
-  gap: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1.5rem;
 }
 
-@media (min-width: 1200px) {
-  .settings-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.settings-container {
+  width: 100%;
+  max-width: 680px;
 }
 
 .settings-card {
@@ -227,13 +230,6 @@
   align-items: flex-start;
 }
 
-.settings-eyebrow {
-  margin: 0 0 0.3rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.78rem;
-  color: #94a3b8;
-}
 
 .settings-header h3 {
   margin: 0;
@@ -849,13 +845,7 @@
   color: #e2e8f0;
 }
 
-.section-label {
-  margin: 0 0 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
+
 
 .plan-history {
   border: 1px solid #e2e8f0;
@@ -951,24 +941,11 @@
   align-items: flex-start;
 }
 
-.analytics-eyebrow {
-  margin: 0 0 0.3rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.78rem;
-  color: #94a3b8;
-}
 
 .analytics-header h3 {
   margin: 0;
   font-size: 1.35rem;
   color: #0f172a;
-}
-
-.analytics-subtitle {
-  margin: 0.15rem 0 0;
-  color: #475569;
-  font-size: 0.95rem;
 }
 
 .analytics-badge {
@@ -1225,13 +1202,6 @@
   flex-wrap: wrap;
 }
 
-.tasks-eyebrow {
-  margin: 0 0 0.3rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.78rem;
-  color: #94a3b8;
-}
 
 .tasks-card-header h3 {
   margin: 0;
@@ -1239,11 +1209,6 @@
   color: #0f172a;
 }
 
-.tasks-subtitle {
-  margin: 0.15rem 0 0;
-  color: #475569;
-  font-size: 0.95rem;
-}
 
 .tasks-progress {
   min-width: 220px;
@@ -1758,34 +1723,46 @@
   color: #475569;
 }
 
-.snapshot-pill {
-  background: #f1f5f9;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #0f172a;
-  padding: 0.35rem 0.85rem;
-}
-
 .snapshot-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.7rem;
 }
 
 .snapshot-card {
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
   background: #f8fafc;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.2rem;
+}
+
+.snapshot-card-merged {
+  display: flex;
+  flex-direction: row;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.snapshot-merged-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.snapshot-merged-divider {
+  width: 1px;
+  height: 55px;
+  background: #cbd5e1;
+  flex-shrink: 0;
 }
 
 .snapshot-label {
   text-transform: uppercase;
-  font-size: 0.78rem;
+  font-size: 10px;
   letter-spacing: 0.08em;
   color: #64748b;
   margin: 0;
@@ -1793,7 +1770,7 @@
 
 .snapshot-value {
   margin: 0;
-  font-size: 2rem;
+  font-size: 28px;
   font-weight: 700;
   color: #0f172a;
 }
@@ -1802,21 +1779,22 @@
   margin: 0;
   color: #1d4ed8;
   font-weight: 600;
+  font-size: 13px;
 }
 
 .snapshot-meta {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 12px;
   color: #64748b;
 }
 
 .snapshot-progress-track {
   position: relative;
   width: 100%;
-  height: 8px;
+  height: 5px;
   border-radius: 999px;
   background: #e2e8f0;
-  margin: 0.35rem 0;
+  margin: 0.2rem 0;
   overflow: hidden;
 }
 
@@ -1826,36 +1804,37 @@
   bottom: 0;
   left: 0;
   border-radius: inherit;
-  background: linear-gradient(120deg, #2563eb, #7c3aed);
+  background: #1d4ed8;
 }
 
 .snapshot-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
 }
 
 .snapshot-tag {
   background: #eef2ff;
   color: #3730a3;
   border-radius: 999px;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.78rem;
+  padding: 0.12rem 0.45rem;
+  font-size: 11px;
   font-weight: 600;
 }
 
 .snapshot-placeholder,
 .snapshot-error {
   border: 1px dashed #cbd5f5;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
   background: #f8fafc;
   color: #475569;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.6rem;
+  font-size: 13px;
 }
 
 .snapshot-error {
@@ -1869,6 +1848,137 @@
   background: #1d4ed8;
   color: #ffffff;
   font-weight: 600;
-  padding: 0.4rem 0.9rem;
+  padding: 0.3rem 0.7rem;
   cursor: pointer;
+  font-size: 12px;
+}
+
+.weekly-snapshot-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.snapshot-compact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.snapshot-compact-eyebrow {
+  margin: 0 0 0.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.snapshot-compact-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.snapshot-compact-subtitle {
+  margin: 0.15rem 0 0;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.snapshot-done-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.snapshot-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.snapshot-stat-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.snapshot-stat-label {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.snapshot-stat-value {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.snapshot-stat-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.snapshot-stat-meta-secondary {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.snapshot-xp-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin-top: 0.4rem;
+}
+
+.snapshot-xp-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transition: width 0.3s ease;
+}
+
+.snapshot-xp-text {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.snapshot-encouragement {
+  margin: 0;
+  text-align: center;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.snapshot-encouragement-inline {
+  margin: 0.4rem 0 0;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.85rem;
 }
