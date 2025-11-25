@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { apiCall } from '../utils/api.js'
 
 const FOCUS_OPTIONS = [
   { id: 'concepts', label: 'Concept review', description: 'Strengthen fundamentals & theory.' },
@@ -214,11 +215,7 @@ function AIPlanner() {
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const res = await fetch('/api/ai/history')
-        if (!res.ok) {
-          throw new Error('Failed to fetch history')
-        }
-        const data = await res.json()
+        const data = await apiCall('/api/ai/history')
         const serverHistory = Array.isArray(data.history)
           ? data.history
               .map((entry) => normalizeHistoryEntry(entry))
@@ -290,17 +287,10 @@ function AIPlanner() {
     }
 
     try {
-      const res = await fetch('/api/ai/plan', {
+      const data = await apiCall('/api/ai/plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-
-      if (!res.ok) {
-        throw new Error('Failed to generate plan')
-      }
-
-      const data = await res.json()
       const normalizedPlan = normalizePlan(data, preferences)
       setPlan(normalizedPlan)
       setNotice('Plan generated with StudyPal AI.')

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { API_URL } from '../config.js'
+import { apiRequest } from '../utils/api.js'
 
 function WeeklySnapshot() {
   const [snapshot, setSnapshot] = useState(null)
@@ -13,7 +13,7 @@ function WeeklySnapshot() {
       setStatus('loading')
       setError(null)
       try {
-        const response = await fetch(`${API_URL}/api/stats/overview`, { signal: controller.signal })
+        const response = await apiRequest('/api/stats/overview', { signal: controller.signal })
         if (!response.ok) throw new Error(`Request failed (${response.status})`)
         setSnapshot(await response.json())
         setStatus('success')

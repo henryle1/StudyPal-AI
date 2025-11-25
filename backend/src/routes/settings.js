@@ -1,11 +1,9 @@
 const express = require('express')
 
 const db = require('../db')
-const authPlaceholder = require('../middleware/auth')
+const authenticate = require('../middleware/auth')
 
 const router = express.Router()
-
-const DEFAULT_USER_ID = 1
 
 const DEFAULT_PROFILE = {
   fullName: 'StudyPal Student',
@@ -38,17 +36,6 @@ function normalizeNotifications(input = {}) {
   }
 }
 
-async function ensureDefaultUser(defaults = {}) {
-  const existing = await db.query('select 1 from users where id = $1', [DEFAULT_USER_ID])
-  if (existing.rowCount === 0) {
-    await db.query(
-      `insert into users (id, name, email)
-       values ($1, $2, $3)
-       on conflict (id) do nothing`,
-      [DEFAULT_USER_ID, defaults.name ?? DEFAULT_PROFILE.fullName, defaults.email ?? DEFAULT_PROFILE.email]
-    )
-  }
-}
 
 let settingsTablesReady = false
 async function ensureSettingsTables() {
@@ -77,25 +64,19 @@ async function ensureSettingsTables() {
   settingsTablesReady = true
 }
 
-async function fetchUserAccount() {
-  const result = await db.query('select id, name, email from users where id = $1', [DEFAULT_USER_ID])
-  let user = result.rows[0] ?? null
-  if (!user) {
-    await ensureDefaultUser()
-    const retry = await db.query('select id, name, email from users where id = $1', [DEFAULT_USER_ID])
-    user = retry.rows[0] ?? null
-  }
-  return user
+async function fetchUserAccount(userId) {
+  const result = await db.query('select id, name, email from users where id = $1', [userId])
+  return result.rows[0] ?? null
 }
 
-async function buildProfilePayload() {
+async function buildProfilePayload(userId) {
   await ensureSettingsTables()
   const [user, profileRow] = await Promise.all([
-    fetchUserAccount(),
+    fetchUserAccount(userId),
     db
       .query(
         'select full_name, timezone, pronouns, notifications from user_profiles where user_id = $1',
-        [DEFAULT_USER_ID]
+        [userId]
       )
       .then((result) => result.rows[0] ?? null)
   ])
@@ -114,13 +95,13 @@ async function buildProfilePayload() {
   }
 }
 
-async function buildIntegrationsPayload() {
+async function buildIntegrationsPayload(userId) {
   await ensureSettingsTables()
   const {
     rows: [row]
   } = await db.query(
     'select gemini_key, calendar_key, sync_calendar, auto_push_tasks from user_integrations where user_id = $1',
-    [DEFAULT_USER_ID]
+    [userId]
   )
 
   return {
@@ -133,18 +114,19 @@ async function buildIntegrationsPayload() {
   }
 }
 
-router.get('/profile', authPlaceholder, async (_req, res, next) => {
+router.get('/profile', authenticate, async (req, res, next) => {
   try {
-    const profile = await buildProfilePayload()
+    const profile = await buildProfilePayload(req.user.id)
     res.json({ profile })
   } catch (error) {
     next(error)
   }
 })
 
-router.put('/profile', authPlaceholder, async (req, res, next) => {
+router.put('/profile', authenticate, async (req, res, next) => {
   try {
     const { fullName, email, timezone, pronouns, notifications } = req.body ?? {}
+    const userId = req.user.id
 
     if (!fullName || !fullName.trim()) {
       return res.status(400).json({ error: 'Full name is required' })
@@ -157,12 +139,10 @@ router.put('/profile', authPlaceholder, async (req, res, next) => {
     const normalizedNotifications = normalizeNotifications(notifications)
     const normalizedTimezone = timezone || DEFAULT_PROFILE.timezone
 
-    await ensureDefaultUser({ name: fullName.trim(), email: email.toLowerCase() })
-
     await db.query('update users set name = $1, email = $2 where id = $3', [
       fullName.trim(),
       email.toLowerCase(),
-      DEFAULT_USER_ID
+      userId
     ])
 
     await db.query(
@@ -174,27 +154,28 @@ router.put('/profile', authPlaceholder, async (req, res, next) => {
            pronouns = excluded.pronouns,
            notifications = excluded.notifications,
            updated_at = now()`,
-      [DEFAULT_USER_ID, fullName.trim(), normalizedTimezone, pronouns ?? '', JSON.stringify(normalizedNotifications)]
+      [userId, fullName.trim(), normalizedTimezone, pronouns ?? '', JSON.stringify(normalizedNotifications)]
     )
 
-    const profile = await buildProfilePayload()
+    const profile = await buildProfilePayload(userId)
     res.json({ profile, message: 'Profile saved' })
   } catch (error) {
     next(error)
   }
 })
 
-router.get('/integrations', authPlaceholder, async (_req, res, next) => {
+router.get('/integrations', authenticate, async (req, res, next) => {
   try {
-    const integrations = await buildIntegrationsPayload()
+    const integrations = await buildIntegrationsPayload(req.user.id)
     res.json({ integrations })
   } catch (error) {
     next(error)
   }
 })
 
-router.put('/integrations', authPlaceholder, async (req, res, next) => {
+router.put('/integrations', authenticate, async (req, res, next) => {
   try {
+    const userId = req.user.id
     const {
       geminiKey = DEFAULT_INTEGRATIONS.geminiKey,
       calendarKey = DEFAULT_INTEGRATIONS.calendarKey,
@@ -211,10 +192,10 @@ router.put('/integrations', authPlaceholder, async (req, res, next) => {
            sync_calendar = excluded.sync_calendar,
            auto_push_tasks = excluded.auto_push_tasks,
            updated_at = now()`,
-      [DEFAULT_USER_ID, geminiKey, calendarKey, Boolean(syncCalendar), Boolean(autoPushTasks)]
+      [userId, geminiKey, calendarKey, Boolean(syncCalendar), Boolean(autoPushTasks)]
     )
 
-    const integrations = await buildIntegrationsPayload()
+    const integrations = await buildIntegrationsPayload(userId)
     res.json({ integrations, message: 'Integrations saved' })
   } catch (error) {
     next(error)

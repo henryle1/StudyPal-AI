@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { apiCall } from '../utils/api.js'
 
 const PRIORITY_META = {
   high: { label: 'High priority', className: 'priority-high' },
@@ -55,12 +56,8 @@ function TodaysFocus() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/tasks')
-      if (!res.ok) {
-        throw new Error('Failed to fetch tasks')
-      }
-      const { tasks: fetchedTasks } = await res.json()
-      const pendingTasks = (fetchedTasks ?? []).filter((task) => task.status !== 'completed')
+      const data = await apiCall('/api/tasks')
+      const pendingTasks = (data.tasks ?? []).filter((task) => task.status !== 'completed')
       const sortedTasks = [...pendingTasks].sort((a, b) => {
         const aDue = a.due_date ? new Date(a.due_date).getTime() : Number.POSITIVE_INFINITY
         const bDue = b.due_date ? new Date(b.due_date).getTime() : Number.POSITIVE_INFINITY
@@ -81,14 +78,10 @@ function TodaysFocus() {
   const markComplete = async (taskId) => {
     setUpdatingTaskId(taskId)
     try {
-      const res = await fetch(`/api/tasks/${taskId}`, {
+      await apiCall(`/api/tasks/${taskId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed' })
       })
-      if (!res.ok) {
-        throw new Error('Failed to update task')
-      }
       setTasks((prev) => prev.filter((task) => task.id !== taskId))
     } catch (err) {
       setError(err.message)
