@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import '../App.css'
 import { useAuthContext } from '../context/AuthContext.jsx'
-import { API_URL } from '../config.js'
+import { apiCall } from '../utils/api.js'
 
 function Register() {
   const navigate = useNavigate()
@@ -24,19 +24,10 @@ function Register() {
     setError('')
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const data = await apiCall('/api/auth/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(form),
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed')
-      }
 
       // Store token in localStorage
       localStorage.setItem('token', data.token)

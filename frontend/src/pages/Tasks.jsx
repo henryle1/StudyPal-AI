@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { apiCall } from '../utils/api.js'
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
@@ -49,11 +50,7 @@ function Tasks() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/tasks')
-      if (!res.ok) {
-        throw new Error('Failed to load tasks')
-      }
-      const data = await res.json()
+      const data = await apiCall('/api/tasks')
       setTasks(data.tasks ?? [])
     } catch (err) {
       setError(err.message)
@@ -183,15 +180,10 @@ function Tasks() {
     try {
       const endpoint = editingTaskId ? `/api/tasks/${editingTaskId}` : '/api/tasks'
       const method = editingTaskId ? 'PUT' : 'POST'
-      const res = await fetch(endpoint, {
+      await apiCall(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || 'Failed to save task')
-      }
       await loadTasks()
       setNotice(editingTaskId ? 'Task updated' : 'Task created')
       resetForm()
@@ -204,14 +196,10 @@ function Tasks() {
 
   const handleStatusUpdate = async (taskId, nextStatus) => {
     try {
-      const res = await fetch(`/api/tasks/${taskId}`, {
+      await apiCall(`/api/tasks/${taskId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus })
       })
-      if (!res.ok) {
-        throw new Error('Failed to update task')
-      }
       await loadTasks()
     } catch (err) {
       setError(err.message)
@@ -221,10 +209,7 @@ function Tasks() {
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm('Delete this task?')) return
     try {
-      const res = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
-      if (!res.ok) {
-        throw new Error('Failed to delete task')
-      }
+      await apiCall(`/api/tasks/${taskId}`, { method: 'DELETE' })
       await loadTasks()
     } catch (err) {
       setError(err.message)

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { apiCall } from '../utils/api.js'
 
 function generatePath(data, accessor, { width = 320, height = 160, maxValue: forcedMax }) {
   if (!data.length) return ''
@@ -31,11 +32,7 @@ function Analytics() {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch('/api/stats/overview')
-        if (!res.ok) {
-          throw new Error('Failed to load analytics data')
-        }
-        const data = await res.json()
+        const data = await apiCall('/api/stats/overview')
         setOverview(data)
       } catch (err) {
         setError(err.message)

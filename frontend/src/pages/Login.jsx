@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import '../App.css'
 import { useAuthContext } from '../context/AuthContext.jsx'
-import { API_URL } from '../config.js'
+import { apiCall } from '../utils/api.js'
 
 function Login() {
   const navigate = useNavigate()
@@ -24,19 +24,10 @@ function Login() {
     setError('')
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const data = await apiCall('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(form),
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
-      }
 
       // Store token in localStorage
       localStorage.setItem('token', data.token)

@@ -1,10 +1,8 @@
 const express = require('express')
 const db = require('../db')
-const authPlaceholder = require('../middleware/auth')
+const authenticate = require('../middleware/auth')
 
 const router = express.Router()
-
-const DEFAULT_USER_ID = 1
 const VALID_PRIORITIES = new Set(['low', 'medium', 'high'])
 const VALID_STATUSES = new Set(['pending', 'in_progress', 'completed'])
 
@@ -26,11 +24,11 @@ function sanitizeStatus(status) {
   return VALID_STATUSES.has(normalized) ? normalized : 'pending'
 }
 
-router.get('/', authPlaceholder, async (req, res, next) => {
+router.get('/', authenticate, async (req, res, next) => {
   try {
     const { status, priority, search, sort = 'due_date' } = req.query
     const filters = ['user_id = $1']
-    const params = [DEFAULT_USER_ID]
+    const params = [req.user.id]
 
     if (status && VALID_STATUSES.has(status)) {
       filters.push(`status = $${params.length + 1}`)
@@ -76,7 +74,7 @@ router.get('/', authPlaceholder, async (req, res, next) => {
   }
 })
 
-router.post('/', authPlaceholder, async (req, res, next) => {
+router.post('/', authenticate, async (req, res, next) => {
   try {
     const {
       title,
@@ -118,7 +116,7 @@ router.post('/', authPlaceholder, async (req, res, next) => {
       `insert into tasks (user_id, title, description, priority, status, due_date, estimated_hours)
        values ($1, $2, $3, $4, $5, $6, $7)
        returning *`,
-      [DEFAULT_USER_ID, title.trim(), description, normalizedPriority, normalizedStatus, dueDateValue, estimatedHoursValue]
+      [req.user.id, title.trim(), description, normalizedPriority, normalizedStatus, dueDateValue, estimatedHoursValue]
     )
 
     res.status(201).json({ task })
@@ -127,7 +125,7 @@ router.post('/', authPlaceholder, async (req, res, next) => {
   }
 })
 
-router.put('/:taskId', authPlaceholder, async (req, res, next) => {
+router.put('/:taskId', authenticate, async (req, res, next) => {
   try {
     const { taskId } = req.params
     const {
@@ -141,7 +139,7 @@ router.put('/:taskId', authPlaceholder, async (req, res, next) => {
 
     const {
       rows: [existingTask]
-    } = await db.query('select * from tasks where id = $1 and user_id = $2', [taskId, DEFAULT_USER_ID])
+    } = await db.query('select * from tasks where id = $1 and user_id = $2', [taskId, req.user.id])
 
     if (!existingTask) {
       return res.status(404).json({ error: 'Task not found' })
@@ -209,7 +207,7 @@ router.put('/:taskId', authPlaceholder, async (req, res, next) => {
     } and user_id = $${values.length + 2} returning *`
     const {
       rows: [updatedTask]
-    } = await db.query(updateSql, [...values, taskId, DEFAULT_USER_ID])
+    } = await db.query(updateSql, [...values, taskId, req.user.id])
 
     if (status !== undefined && sanitizeStatus(status) !== existingTask.status) {
       await db.query(
@@ -225,10 +223,10 @@ router.put('/:taskId', authPlaceholder, async (req, res, next) => {
   }
 })
 
-router.delete('/:taskId', authPlaceholder, async (req, res, next) => {
+router.delete('/:taskId', authenticate, async (req, res, next) => {
   try {
     const { taskId } = req.params
-    await db.query('delete from tasks where id = $1 and user_id = $2', [taskId, DEFAULT_USER_ID])
+    await db.query('delete from tasks where id = $1 and user_id = $2', [taskId, req.user.id])
     res.status(204).send()
   } catch (err) {
     next(err)

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { apiCall } from '../utils/api.js'
 
 const DEFAULT_PROFILE = {
   fullName: 'StudyPal Student',
@@ -127,11 +128,7 @@ function Settings() {
     setProfileLoading(true)
     setProfileError(null)
     try {
-      const res = await fetch('/api/settings/profile')
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to load profile')
-      }
+      const data = await apiCall('/api/settings/profile')
       const normalized = normalizeProfilePayload(data.profile ?? {})
       setProfile(normalized)
       setInitialProfile(normalized)
@@ -146,11 +143,7 @@ function Settings() {
     setIntegrationLoading(true)
     setIntegrationError(null)
     try {
-      const res = await fetch('/api/settings/integrations')
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to load integrations')
-      }
+      const data = await apiCall('/api/settings/integrations')
       const normalized = normalizeIntegrationsPayload(data.integrations ?? {})
       setIntegrations(normalized)
       setInitialIntegrations(normalized)
@@ -214,15 +207,10 @@ function Settings() {
     setProfileNotice(null)
     setProfileError(null)
     try {
-      const res = await fetch('/api/settings/profile', {
+      const data = await apiCall('/api/settings/profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile)
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to save profile')
-      }
       const normalized = normalizeProfilePayload(data.profile ?? profile)
       setProfile(normalized)
       setInitialProfile(normalized)
@@ -240,15 +228,10 @@ function Settings() {
     setIntegrationNotice(null)
     setIntegrationError(null)
     try {
-      const res = await fetch('/api/settings/integrations', {
+      const data = await apiCall('/api/settings/integrations', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(integrations)
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to save integrations')
-      }
       const normalized = normalizeIntegrationsPayload(data.integrations ?? integrations)
       setIntegrations(normalized)
       setInitialIntegrations(normalized)
