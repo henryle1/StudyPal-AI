@@ -7,6 +7,7 @@ import DashboardLayout from './layouts/DashboardLayout.jsx'
 import AIPlanner from './pages/AIPlanner.jsx'
 import Analytics from './pages/Analytics.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
 import Login from './pages/Login.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Register from './pages/Register.jsx'
@@ -21,6 +22,7 @@ function App() {
 
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/register" element={<Register />} />
+        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
         <Route path="/app" element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>

@@ -81,9 +81,14 @@ function Login() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
-        <p className="link-text">
-          New student? <Link to="/auth/register">Create an account</Link>
-        </p>
+        <div className="link-row">
+          <p className="link-text">
+            Forgot password? <Link to="/auth/forgot-password">Reset it</Link>
+          </p>
+          <p className="link-text">
+            New student? <Link to="/auth/register">Create an account</Link>
+          </p>
+        </div>
       </div>
     </div>
   )

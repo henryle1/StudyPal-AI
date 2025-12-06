@@ -10,6 +10,21 @@ create table if not exists users (
    created_at    timestamptz default now()
 );
 
+create table if not exists password_resets (
+   id          serial primary key,
+   user_id     integer not null
+      references users ( id )
+         on delete cascade,
+   token_hash  text not null,
+   expires_at  timestamptz not null,
+   used        boolean default false,
+   created_at  timestamptz default now(),
+   used_at     timestamptz
+);
+
+create index if not exists idx_password_resets_token_hash on password_resets ( token_hash );
+create index if not exists idx_password_resets_user_id on password_resets ( user_id );
+
 create table if not exists tasks (
    id              serial primary key,
    user_id         integer not null

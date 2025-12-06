@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAuthContext } from '../context/AuthContext.jsx'
 import { apiCall } from '../utils/api.js'
 
 const DEFAULT_PROFILE = {
@@ -31,6 +32,8 @@ const TIMEZONES = [
   { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
   { value: 'Asia/Tokyo', label: 'Tokyo (JST)' }
 ]
+
+const COMMON_PRONOUNS = ['she/her', 'he/him', 'they/them', 'she/they', 'he/they', 'ze/hir']
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -98,8 +101,10 @@ function IntegrationField({ label, placeholder, value, onChange, masked, helper 
 }
 
 function Settings() {
+  const { updateUser } = useAuthContext()
   const [profile, setProfile] = useState(DEFAULT_PROFILE)
   const [integrations, setIntegrations] = useState(DEFAULT_INTEGRATIONS)
+  const [customPronouns, setCustomPronouns] = useState('')
 
   const [initialProfile, setInitialProfile] = useState(DEFAULT_PROFILE)
   const [initialIntegrations, setInitialIntegrations] = useState(DEFAULT_INTEGRATIONS)
@@ -132,12 +137,18 @@ function Settings() {
       const normalized = normalizeProfilePayload(data.profile ?? {})
       setProfile(normalized)
       setInitialProfile(normalized)
+      const pronounMatch = COMMON_PRONOUNS.find(
+        (option) => option.toLowerCase() === (normalized.pronouns ?? '').toLowerCase()
+      )
+      setCustomPronouns(pronounMatch ? '' : normalized.pronouns ?? '')
+      // Sync header/user display name/email without refetch loops
+      updateUser({ name: normalized.fullName, email: normalized.email })
     } catch (error) {
       setProfileError(error.message)
     } finally {
       setProfileLoading(false)
     }
-  }, [])
+  }, [updateUser])
 
   const fetchIntegrations = useCallback(async () => {
     setIntegrationLoading(true)
@@ -211,9 +222,7 @@ function Settings() {
         method: 'PUT',
         body: JSON.stringify(profile)
       })
-      const normalized = normalizeProfilePayload(data.profile ?? profile)
-      setProfile(normalized)
-      setInitialProfile(normalized)
+      await fetchProfile()
       setProfileNotice(data.message ?? 'Profile saved')
     } catch (err) {
       setProfileError(err.message)
@@ -232,15 +241,33 @@ function Settings() {
         method: 'PUT',
         body: JSON.stringify(integrations)
       })
-      const normalized = normalizeIntegrationsPayload(data.integrations ?? integrations)
-      setIntegrations(normalized)
-      setInitialIntegrations(normalized)
+      await fetchIntegrations()
       setIntegrationNotice(data.message ?? 'Integrations saved')
     } catch (err) {
       setIntegrationError(err.message)
     } finally {
       setIntegrationSaving(false)
     }
+  }
+
+  const currentPronounChoice = useMemo(() => {
+    const pronounValue = (profile.pronouns ?? '').trim()
+    const match = COMMON_PRONOUNS.find((option) => option.toLowerCase() === pronounValue.toLowerCase())
+    return match ?? 'custom'
+  }, [profile.pronouns])
+
+  const handlePronounOptionChange = (value) => {
+    if (value === 'custom') {
+      updateProfileField('pronouns', customPronouns)
+    } else {
+      updateProfileField('pronouns', value)
+      setCustomPronouns('')
+    }
+  }
+
+  const handleCustomPronounsChange = (value) => {
+    setCustomPronouns(value)
+    updateProfileField('pronouns', value)
   }
 
   return (
@@ -292,12 +319,22 @@ function Settings() {
 
             <label className="settings-field">
               <span>Pronouns</span>
-              <input
-                type="text"
-                value={profile.pronouns}
-                onChange={(event) => updateProfileField('pronouns', event.target.value)}
-                placeholder="she/her, he/him, they/them..."
-              />
+              <select value={currentPronounChoice} onChange={(event) => handlePronounOptionChange(event.target.value)}>
+                {COMMON_PRONOUNS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+                <option value="custom">Custom</option>
+              </select>
+              {currentPronounChoice === 'custom' && (
+                <input
+                  type="text"
+                  value={customPronouns}
+                  onChange={(event) => handleCustomPronounsChange(event.target.value)}
+                  placeholder="Add your pronouns"
+                />
+              )}
             </label>
 
             <div className="settings-section">
