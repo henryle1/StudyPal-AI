@@ -33,6 +33,8 @@ function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AuthProvider>
   )

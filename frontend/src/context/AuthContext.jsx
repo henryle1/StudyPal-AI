@@ -1,9 +1,26 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const AuthContext = createContext()
 
+const AUTH_STORAGE_KEY = 'studypal_auth_user'
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY)
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY)
+    }
+  }, [user])
 
   const login = useCallback(
     (nextUser) => setUser(nextUser ?? { id: 'demo', name: 'Demo User' }),
