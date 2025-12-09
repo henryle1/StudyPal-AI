@@ -13,7 +13,7 @@ npm run lint     # run ESLint
 
 ## Key Files
 
-- `src/pages/*` – placeholder pages aligned with the backlog (Dashboard, Tasks, AI Planner, Analytics, Settings, Auth screens).
+- `src/pages/*` – placeholder pages aligned with the backlog (Dashboard, Tasks, Planner, Analytics, Settings, Auth screens).
 - `src/layouts/DashboardLayout.jsx` – shell containing sidebar + header; injects page content via `<Outlet />`.
 - `src/context/AuthContext.jsx` – minimal auth state; replace with real logic once backend is ready.
 - `src/components/PlaceholderCard.jsx` – drop-in component used as a reminder of what to build next.

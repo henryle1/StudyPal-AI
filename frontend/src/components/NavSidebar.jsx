@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 const links = [
   { to: '/app', label: 'Overview', end: true },
   { to: '/app/tasks', label: 'Tasks' },
-  { to: '/app/ai', label: 'AI Planner' },
+  { to: '/app/ai', label: 'Planner' },
   { to: '/app/analytics', label: 'Analytics' },
   { to: '/app/settings', label: 'Settings' }
 ]
