@@ -82,9 +82,10 @@ function Login() {
           </button>
         </form>
         <div className="link-row">
-          <p className="link-text">
+          {/* Forgot password flow is temporarily disabled */}
+          {/* <p className="link-text">
             Forgot password? <Link to="/auth/forgot-password">Reset it</Link>
-          </p>
+          </p> */}
           <p className="link-text">
             New student? <Link to="/auth/register">Create an account</Link>
           </p>

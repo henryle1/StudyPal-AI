@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiCall } from '../utils/api.js'
 
 const FOCUS_OPTIONS = [
@@ -35,6 +35,20 @@ const DEFAULT_PREFERENCES = {
   preferredWindows: ['early', 'afternoon'],
   targetGoal: 'Upcoming exam or project milestone',
   notes: ''
+}
+
+const PLAN_STORAGE_KEY = 'studypal_ai_plan'
+const PREFS_STORAGE_KEY = 'studypal_ai_preferences'
+
+function loadFromStorage(key, fallback = null) {
+  if (typeof window === 'undefined') return fallback
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return fallback
+    return JSON.parse(raw)
+  } catch {
+    return fallback
+  }
 }
 
 function buildFallbackPlan(preferences) {
@@ -139,8 +153,8 @@ function normalizePlan(apiResponse, preferences) {
 }
 
 function AIPlanner() {
-  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES)
-  const [plan, setPlan] = useState(null)
+  const [preferences, setPreferences] = useState(() => loadFromStorage(PREFS_STORAGE_KEY, DEFAULT_PREFERENCES))
+  const [plan, setPlan] = useState(() => loadFromStorage(PLAN_STORAGE_KEY, null))
   const [planLoading, setPlanLoading] = useState(false)
   const [planError, setPlanError] = useState(null)
   const [notice, setNotice] = useState(null)
@@ -172,6 +186,20 @@ function AIPlanner() {
   const updatePreference = useCallback((key, value) => {
     setPreferences((prev) => ({ ...prev, [key]: value }))
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(preferences))
+  }, [preferences])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (plan) {
+      localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plan))
+    } else {
+      localStorage.removeItem(PLAN_STORAGE_KEY)
+    }
+  }, [plan])
 
   const validatePreferences = () => {
     if (!preferences.focusAreas.length) {
@@ -226,6 +254,9 @@ function AIPlanner() {
   const clearPlan = () => {
     setPlan(null)
     setNotice(null)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(PLAN_STORAGE_KEY)
+    }
   }
 
   return (
@@ -371,18 +402,21 @@ function AIPlanner() {
                   <p>{planStats.weeklyHours}h per week · {planStats.days} days</p>
                 </div>
 
-                <div className="plan-week-grid">
+                <ul className="plan-list">
                   {plan.dailySchedule.map((day, index) => {
                     const blocks = Array.isArray(day.blocks) ? day.blocks : []
                     return (
-                      <article key={`${day.day}-${index}`} className="day-card">
-                        <header className="day-card-header">
-                          <div>
-                            <p className="day-name">{day.day}</p>
-                            <p className="day-theme">{day.theme}</p>
+                      <li key={`${day.day}-${index}`} className="plan-list-item">
+                        <div className="plan-list-head">
+                          <div className="plan-list-day">
+                            <span className="plan-day-index">Day {index + 1}</span>
+                            <div>
+                              <p className="day-name">{day.day}</p>
+                              <p className="day-theme">{day.theme}</p>
+                            </div>
                           </div>
                           <span className="day-hours">{day.totalHours}h</span>
-                        </header>
+                        </div>
                         <p className="day-focus">{day.focus}</p>
                         <ul className="block-list">
                           {blocks.length === 0 ? (
@@ -400,10 +434,10 @@ function AIPlanner() {
                             ))
                           )}
                         </ul>
-                      </article>
+                      </li>
                     )
                   })}
-                </div>
+                </ul>
               </>
             )}
           </div>
