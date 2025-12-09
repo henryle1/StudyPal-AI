@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "build": "cd ../frontend && npm run build && cd ../backend && rm -rf public && cp -r ../frontend/dist public",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "keywords": [],
