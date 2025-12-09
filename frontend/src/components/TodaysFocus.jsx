@@ -20,7 +20,7 @@ function getDueMeta(dueDate) {
   const today = new Date()
   const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   const due = new Date(dueDate)
-  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate())
+  const dueDay = new Date(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate())
   const diffInDays = Math.round((dueDay - currentDay) / (1000 * 60 * 60 * 24))
 
   if (diffInDays < 0) {

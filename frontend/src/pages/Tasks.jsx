@@ -26,7 +26,9 @@ function formatDate(dateString) {
   if (!dateString) return 'No due date'
   const date = new Date(dateString)
   if (Number.isNaN(date.getTime())) return 'No due date'
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  const month = date.getUTCMonth() + 1
+  const day = date.getUTCDate()
+  return `${month}/${day}`
 }
 
 function Tasks() {
@@ -217,7 +219,117 @@ function Tasks() {
   }
 
   return (
-    <div className="tasks-grid">
+    <div className="tasks-container">
+      {/* Create Task Form - Sticky at top */}
+      <section className="tasks-card tasks-create-card">
+        <header className="tasks-card-header">
+          <div>
+            <h3>{editingTaskId ? 'Edit task' : 'Create new task'}</h3>
+          </div>
+        </header>
+
+        {notice && (
+          <div className="task-notice" role="status">
+            <span>{notice}</span>
+            <button
+              type="button"
+              className="notice-close"
+              onClick={() => setNotice(null)}
+              aria-label="Close notification"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="task-state task-error" role="alert">
+            <span>{error}</span>
+            <button
+              type="button"
+              className="notice-close"
+              onClick={() => setError(null)}
+              aria-label="Close error"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <form className="task-form" onSubmit={handleSubmit}>
+          <div className="task-form-row">
+            <label className="task-form-title">
+              Title
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleFormChange}
+                required
+                placeholder="e.g. Draft AI presentation"
+              />
+            </label>
+            <label className="task-form-compact">
+              Priority
+              <select name="priority" value={formData.priority} onChange={handleFormChange}>
+                {PRIORITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="task-form-compact">
+              Status
+              <select name="status" value={formData.status} onChange={handleFormChange}>
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="task-form-compact">
+              Due date
+              <input type="date" name="dueDate" value={formData.dueDate} onChange={handleFormChange} />
+            </label>
+            <label className="task-form-compact">
+              Hours
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                name="estimatedHours"
+                value={formData.estimatedHours}
+                onChange={handleFormChange}
+                placeholder="2"
+              />
+            </label>
+          </div>
+
+          <label>
+            Description
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleFormChange}
+              rows="2"
+              placeholder="Add helpful context"
+            />
+          </label>
+
+          <div className="task-form-actions">
+            <button type="submit" className="primary-btn" disabled={submitting}>
+              {submitting ? 'Saving…' : editingTaskId ? 'Update task' : 'Create task'}
+            </button>
+            <button type="button" className="ghost-btn" onClick={resetForm} disabled={submitting}>
+              Reset
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {/* Task List */}
       <section className="tasks-card">
         <header className="tasks-card-header">
           <div>
@@ -325,106 +437,6 @@ function Tasks() {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="tasks-card">
-        <header className="tasks-card-header">
-          <div>
-            <p className="tasks-eyebrow">Create / Edit task</p>
-            <h3>{editingTaskId ? 'Update an existing task' : 'Add a new task'}</h3>
-            <p className="tasks-subtitle">
-              Capture the essentials: title, description, due date, and priority. Switch to edit mode by selecting a task.
-            </p>
-          </div>
-        </header>
-
-        {notice && (
-          <div className="task-notice" role="status">
-            {notice}
-          </div>
-        )}
-
-        {error && !loading && (
-          <div className="task-state task-error" role="alert">
-            {error}
-          </div>
-        )}
-
-        <form className="task-form" onSubmit={handleSubmit}>
-          <label>
-            Title
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleFormChange}
-              required
-              placeholder="e.g. Draft AI presentation"
-            />
-          </label>
-
-          <label>
-            Description
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleFormChange}
-              rows="3"
-              placeholder="Add helpful context"
-            />
-          </label>
-
-          <div className="task-form-grid">
-            <label>
-              Priority
-              <select name="priority" value={formData.priority} onChange={handleFormChange}>
-                {PRIORITY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Status
-              <select name="status" value={formData.status} onChange={handleFormChange}>
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="task-form-grid">
-            <label>
-              Due date
-              <input type="date" name="dueDate" value={formData.dueDate} onChange={handleFormChange} />
-            </label>
-            <label>
-              Estimated hours
-              <input
-                type="number"
-                min="0"
-                step="0.5"
-                name="estimatedHours"
-                value={formData.estimatedHours}
-                onChange={handleFormChange}
-                placeholder="e.g. 2"
-              />
-            </label>
-          </div>
-
-          <div className="task-form-actions">
-            <button type="submit" className="primary-btn" disabled={submitting}>
-              {submitting ? 'Saving…' : editingTaskId ? 'Update task' : 'Create task'}
-            </button>
-            <button type="button" className="ghost-btn" onClick={resetForm} disabled={submitting}>
-              Reset
-            </button>
-          </div>
-        </form>
       </section>
     </div>
   )

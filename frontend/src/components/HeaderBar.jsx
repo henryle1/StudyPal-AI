@@ -1,12 +1,14 @@
 import { useAuthContext } from '../context/AuthContext.jsx'
 
-function HeaderBar({ title = 'Dashboard'}) {
+function HeaderBar() {
   const { user, logout } = useAuthContext()
 
   return (
     <header className="content-header">
       <div>
-        <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>{title}</h1>
+        <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>
+          Hey {user?.name ?? 'Guest'}, let's make today count!
+        </h1>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ textAlign: 'right' }}>

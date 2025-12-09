@@ -207,13 +207,42 @@ function Analytics() {
                 {completionRates.slice(-1)[0]?.completionRate ?? 0}% last day
               </span>
             </header>
-            <svg viewBox="0 0 320 160" role="img" aria-label="Weekly completion chart">
+            <svg viewBox="-35 0 355 160" role="img" aria-label="Weekly completion chart">
               <defs>
                 <linearGradient id="completionGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor="rgba(37,99,235,0.4)" />
                   <stop offset="100%" stopColor="rgba(59,130,246,0.05)" />
                 </linearGradient>
               </defs>
+
+              {/* Y-axis grid lines */}
+              {[0, 25, 50, 75, 100].map((value) => {
+                const y = 160 - (value / 100) * 150 - 5
+                return (
+                  <g key={`grid-${value}`}>
+                    <line
+                      x1="0"
+                      y1={y}
+                      x2="320"
+                      y2={y}
+                      stroke="#e2e8f0"
+                      strokeWidth="1"
+                      strokeDasharray="3,3"
+                    />
+                    <text
+                      x="-5"
+                      y={y}
+                      fontSize="10"
+                      fill="#94a3b8"
+                      textAnchor="end"
+                      dominantBaseline="middle"
+                    >
+                      {value}%
+                    </text>
+                  </g>
+                )
+              })}
+
               <path
                 d={`${completionPath} L 320 160 L 0 160 Z`}
                 fill="url(#completionGradient)"
@@ -252,13 +281,42 @@ function Analytics() {
               </div>
               <span className="chart-value">{totalHoursLogged}h</span>
             </header>
-            <svg viewBox="0 0 320 160" role="img" aria-label="Cumulative hours chart">
+            <svg viewBox="-35 0 355 160" role="img" aria-label="Cumulative hours chart">
               <defs>
                 <linearGradient id="hoursGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#a855f7" />
                   <stop offset="100%" stopColor="#ec4899" />
                 </linearGradient>
               </defs>
+
+              {/* Y-axis grid lines */}
+              {[0, 1, 2, 3, 4].map((value) => {
+                const y = 160 - (value / (maxHours || 4)) * 150 - 5
+                return (
+                  <g key={`grid-hours-${value}`}>
+                    <line
+                      x1="0"
+                      y1={y}
+                      x2="320"
+                      y2={y}
+                      stroke="#e2e8f0"
+                      strokeWidth="1"
+                      strokeDasharray="3,3"
+                    />
+                    <text
+                      x="-5"
+                      y={y}
+                      fontSize="10"
+                      fill="#94a3b8"
+                      textAnchor="end"
+                      dominantBaseline="middle"
+                    >
+                      {value}h
+                    </text>
+                  </g>
+                )
+              })}
+
               <path d={hoursPath} fill="none" stroke="url(#hoursGradient)" strokeWidth="3" />
               {hoursSeries.map((entry, index) => {
                 const stepX = 320 / (hoursSeries.length - 1 || 1)

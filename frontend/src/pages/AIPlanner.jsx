@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { apiCall } from '../utils/api.js'
 
 const FOCUS_OPTIONS = [
@@ -28,7 +28,6 @@ const WINDOW_LOOKUP = TIME_WINDOWS.reduce((acc, option) => {
 }, {})
 
 const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-const HISTORY_STORAGE_KEY = 'studypal_ai_history'
 
 const DEFAULT_PREFERENCES = {
   studyHours: 12,
@@ -139,103 +138,24 @@ function normalizePlan(apiResponse, preferences) {
   }
 }
 
-function normalizeHistoryEntry(entry) {
-  if (!entry) {
-    return null
-  }
-  const id = entry.id ?? `server-${entry.savedAt ?? entry.created_at ?? Date.now()}`
-  const savedAt = entry.savedAt ?? entry.created_at ?? new Date().toISOString()
-
-  return {
-    id,
-    savedAt,
-    plan: entry.plan ?? entry,
-    preferences: entry.preferences ?? null,
-    source: 'server'
-  }
-}
-
 function AIPlanner() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES)
   const [plan, setPlan] = useState(null)
   const [planLoading, setPlanLoading] = useState(false)
   const [planError, setPlanError] = useState(null)
-  const [history, setHistory] = useState([])
-  const [historyLoading, setHistoryLoading] = useState(true)
   const [notice, setNotice] = useState(null)
-
-  const focusBadges = useMemo(() => {
-    return preferences.focusAreas.map((id) => FOCUS_LOOKUP[id]?.label ?? id)
-  }, [preferences.focusAreas])
 
   const planStats = useMemo(() => {
     if (!plan) {
-      return { weeklyHours: 0, days: 0, totalBlocks: 0, avgBlockLength: 0 }
+      return { weeklyHours: 0, days: 0 }
     }
     const schedule = Array.isArray(plan.dailySchedule) ? plan.dailySchedule : []
     const weeklyHours = schedule.reduce((sum, day) => sum + (Number(day.totalHours) || 0), 0)
-    const totalBlocks = schedule.reduce(
-      (sum, day) => sum + (Array.isArray(day.blocks) ? day.blocks.length : 0),
-      0
-    )
-    const avgBlockLength = totalBlocks ? Math.round((weeklyHours / totalBlocks) * 10) / 10 : 0
     return {
       weeklyHours,
-      days: schedule.length,
-      totalBlocks,
-      avgBlockLength
+      days: schedule.length
     }
   }, [plan])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    const stored = window.localStorage.getItem(HISTORY_STORAGE_KEY)
-    if (!stored) {
-      return
-    }
-    try {
-      const parsed = JSON.parse(stored)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setHistory(parsed)
-      }
-    } catch {
-      // ignore invalid payloads
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history))
-  }, [history])
-
-  useEffect(() => {
-    async function fetchHistory() {
-      try {
-        const data = await apiCall('/api/ai/history')
-        const serverHistory = Array.isArray(data.history)
-          ? data.history
-              .map((entry) => normalizeHistoryEntry(entry))
-              .filter(Boolean)
-          : []
-        if (serverHistory.length) {
-          setHistory((prev) => {
-            const existingIds = new Set(prev.map((item) => item.id))
-            const merged = [...serverHistory.filter((item) => !existingIds.has(item.id)), ...prev]
-            return merged.slice(0, 10)
-          })
-        }
-      } catch {
-        // silently ignore - offline history still works.
-      } finally {
-        setHistoryLoading(false)
-      }
-    }
-    fetchHistory()
-  }, [])
 
   const togglePreferenceList = useCallback((key, value) => {
     setPreferences((prev) => {
@@ -293,80 +213,13 @@ function AIPlanner() {
       })
       const normalizedPlan = normalizePlan(data, preferences)
       setPlan(normalizedPlan)
-      setNotice('Plan generated with StudyPal AI.')
+      setNotice('Plan generated successfully.')
     } catch (error) {
       const fallbackPlan = buildFallbackPlan(preferences)
       setPlan(fallbackPlan)
-      setPlanError(error.message ?? 'Unable to reach the AI planner. Showing fallback plan.')
+      setPlanError(error.message ?? 'Unable to generate plan. Showing default schedule.')
     } finally {
       setPlanLoading(false)
-    }
-  }
-
-  const savePlanToHistory = () => {
-    if (!plan) {
-      return
-    }
-    const uniqueId =
-      typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `local-${Date.now()}`
-    const entry = {
-      id: uniqueId,
-      savedAt: new Date().toISOString(),
-      plan,
-      preferences
-    }
-    setHistory((prev) => [entry, ...prev].slice(0, 10))
-    setNotice('Plan saved to history.')
-  }
-
-  const loadHistoryEntry = (entry) => {
-    setPlan(entry.plan)
-    if (entry.preferences) {
-      setPreferences(entry.preferences)
-    }
-    setNotice(`Loaded plan from ${new Date(entry.savedAt).toLocaleDateString()}.`)
-  }
-
-  const copyPlanSummary = async () => {
-    if (!plan) {
-      return
-    }
-
-    const generatedAt = new Date(plan.metadata?.generatedAt ?? Date.now())
-    const lines = [
-      `StudyPal AI Plan — ${generatedAt.toLocaleString()}`,
-      `Summary: ${plan.summary}`,
-      `Weekly focus: ${planStats.weeklyHours}h across ${planStats.days} days`,
-      `Blocks: ${planStats.totalBlocks} (avg ${planStats.avgBlockLength || 0}h)`,
-      focusBadges.length ? `Focus areas: ${focusBadges.join(', ')}` : null,
-      ''
-    ].filter(Boolean)
-
-    plan.dailySchedule.forEach((day) => {
-      lines.push(`${day.day} · ${day.theme} (${day.totalHours}h)`)
-      if (Array.isArray(day.blocks) && day.blocks.length > 0) {
-        day.blocks.forEach((block) => {
-          lines.push(
-            `  - ${block.label}${block.window ? ` [${block.window}]` : ''}: ${block.activity} (${block.duration})`
-          )
-        })
-      } else {
-        lines.push('  - No scheduled blocks.')
-      }
-      lines.push('')
-    })
-
-    const clipboardText = lines.join('\n')
-
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(clipboardText)
-        setNotice('Plan summary copied to clipboard.')
-      } else {
-        throw new Error('Clipboard unavailable')
-      }
-    } catch (_error) {
-      setNotice('Clipboard unavailable. Select the summary text manually.')
     }
   }
 
@@ -381,10 +234,9 @@ function AIPlanner() {
         <header className="ai-card-header">
           <div>
             <p className="ai-eyebrow">Plan preferences</p>
-            <h3>Tell StudyPal what to prioritize</h3>
+            <h3>Set your study priorities</h3>
             <p className="ai-subtitle">
-              Share the hours you can commit, the skills that need attention, and the time windows
-              that actually work.
+              Configure your available hours, focus areas, and preferred time windows to generate a personalized study schedule.
             </p>
           </div>
           <div className="hours-badge">{preferences.studyHours}h / week</div>
@@ -457,7 +309,7 @@ function AIPlanner() {
           </label>
 
           <label className="form-field">
-            <span>Notes for the AI planner</span>
+            <span>Additional notes</span>
             <textarea
               rows="3"
               value={preferences.notes}
@@ -486,17 +338,7 @@ function AIPlanner() {
       <section className="ai-card">
         <header className="ai-card-header">
           <div>
-            <p className="ai-eyebrow">Generated study plan</p>
-            <h3>Stay accountable all week</h3>
-            <p className="ai-subtitle">
-              StudyPal summarizes the focus, outlines daily blocks, and keeps helpful reminders in
-              one place.
-            </p>
-          </div>
-          <div className="plan-actions">
-            <button type="button" className="ghost-btn" onClick={savePlanToHistory} disabled={!plan}>
-              Save to history
-            </button>
+            <h3>Your study plan</h3>
           </div>
         </header>
 
@@ -524,54 +366,10 @@ function AIPlanner() {
 
             {!planLoading && plan && (
               <>
-                <section className="plan-hero">
-                  <div>
-                    <p className="summary-label">Weekly intent</p>
-                    <h4>{plan.summary}</h4>
-                    <p className="plan-provider">
-                      {new Date(plan.metadata?.generatedAt ?? Date.now()).toLocaleString()} ·{' '}
-                      {plan.metadata?.provider ?? 'StudyPal AI'}
-                    </p>
-                  </div>
-                  <div className="plan-hero-actions">
-                    <button type="button" onClick={copyPlanSummary}>
-                      Copy summary
-                    </button>
-                  </div>
-                </section>
-
-                <ul className="plan-stat-grid">
-                  <li>
-                    <p>Weekly focus</p>
-                    <strong>{planStats.weeklyHours}h</strong>
-                    <small>Estimated study time</small>
-                  </li>
-                  <li>
-                    <p>Active days</p>
-                    <strong>{planStats.days}</strong>
-                    <small>Planned work sessions</small>
-                  </li>
-                  <li>
-                    <p>Blocks</p>
-                    <strong>{planStats.totalBlocks}</strong>
-                    <small>
-                      Avg {planStats.avgBlockLength ? `${planStats.avgBlockLength}h` : '—'} per block
-                    </small>
-                  </li>
-                  <li>
-                    <p>Focus areas</p>
-                    <strong>{focusBadges.length || '—'}</strong>
-                    <small>What you’re prioritizing</small>
-                  </li>
-                </ul>
-
-                {focusBadges.length > 0 && (
-                  <div className="plan-tags">
-                    {focusBadges.map((label) => (
-                      <span key={label}>{label}</span>
-                    ))}
-                  </div>
-                )}
+                <div className="plan-summary">
+                  <p>{plan.summary}</p>
+                  <p>{planStats.weeklyHours}h per week · {planStats.days} days</p>
+                </div>
 
                 <div className="plan-week-grid">
                   {plan.dailySchedule.map((day, index) => {
@@ -606,49 +404,9 @@ function AIPlanner() {
                     )
                   })}
                 </div>
-
-                <section className="plan-tips">
-                  <p className="section-label">Guided reminders</p>
-                  <h4>Keep the momentum</h4>
-                  <ul>
-                    {plan.tips.map((tip, index) => (
-                      <li key={index}>{tip}</li>
-                    ))}
-                  </ul>
-                </section>
               </>
             )}
           </div>
-
-          <aside className="plan-history">
-            <div className="history-header">
-              <p className="section-label">Plan history</p>
-              {historyLoading && <small>Loading…</small>}
-            </div>
-            {history.length === 0 && (
-              <p className="history-empty">No saved plans yet. Generate one and tap “Save”.</p>
-            )}
-            <ul>
-              {history.map((entry) => (
-                <li key={entry.id}>
-                  <div>
-                    <strong>{new Date(entry.savedAt).toLocaleDateString()}</strong>
-                    {entry.preferences?.targetGoal && <small>{entry.preferences.targetGoal}</small>}
-                  </div>
-                  <div className="history-tags">
-                    {(entry.preferences?.focusAreas ?? []).slice(0, 2).map((focusId) => (
-                      <span key={`${entry.id}-${focusId}`}>
-                        {FOCUS_LOOKUP[focusId]?.label ?? focusId}
-                      </span>
-                    ))}
-                  </div>
-                  <button type="button" onClick={() => loadHistoryEntry(entry)}>
-                    Reuse plan
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </aside>
         </div>
       </section>
     </div>

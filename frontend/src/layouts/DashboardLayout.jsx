@@ -8,7 +8,7 @@ function DashboardLayout() {
     <div className="dashboard-shell">
       <NavSidebar />
       <div className="content-area">
-        <HeaderBar title="Study Assistant Overview"/>
+        <HeaderBar />
         <main className="content-main">
           <Outlet />
         </main>

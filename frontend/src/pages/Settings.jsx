@@ -63,19 +63,6 @@ function normalizeIntegrationsPayload(integrations = {}) {
   }
 }
 
-function Toggle({ label, description, checked, onChange }) {
-  return (
-    <label className="settings-toggle">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      <span className="toggle-pill" aria-hidden="true" />
-      <span>
-        <strong>{label}</strong>
-        {description && <small>{description}</small>}
-      </span>
-    </label>
-  )
-}
-
 function IntegrationField({ label, placeholder, value, onChange, masked, helper }) {
   const [show, setShow] = useState(false)
 
@@ -176,18 +163,6 @@ function Settings() {
     setProfileError(null)
   }
 
-  const updateNotificationField = (field, value) => {
-    setProfile((prev) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [field]: value
-      }
-    }))
-    setProfileNotice(null)
-    setProfileError(null)
-  }
-
   const updateIntegrationField = (field, value) => {
     setIntegrations((prev) => ({ ...prev, [field]: value }))
     setIntegrationNotice(null)
@@ -271,21 +246,16 @@ function Settings() {
   }
 
   return (
-    <div className="settings-grid">
-      <div className="settings-container">
-        <section className="settings-card">
-        <header className="settings-header">
-          <div>
-            <h3>Profile settings</h3>
-            <p className="settings-subtitle">Manage identity details, timezone, and notifications.</p>
-          </div>
-          <span className="settings-status">{profile.timezone}</span>
-        </header>
+    <div className="settings-container">
+      <header className="settings-page-header">
+        <h2>Settings</h2>
+        <p>Manage your profile and preferences</p>
+      </header>
 
-        {profileLoading ? (
-          <div className="task-state">Loading profile…</div>
-        ) : (
-          <form className="settings-form" onSubmit={saveProfile}>
+      {profileLoading ? (
+        <div className="task-state">Loading profile…</div>
+      ) : (
+        <form className="settings-form" onSubmit={saveProfile}>
             <label className="settings-field">
               <span>Full name</span>
               <input
@@ -337,36 +307,6 @@ function Settings() {
               )}
             </label>
 
-            <div className="settings-section">
-              <h3>Notifications</h3>
-              <div className="toggle-grid">
-                <Toggle
-                  label="Weekly progress digest"
-                  description="Summary email every Sunday evening."
-                  checked={profile.notifications.digest}
-                  onChange={(value) => updateNotificationField('digest', value)}
-                />
-                <Toggle
-                  label="Deadline reminders"
-                  description="Nudges a day before important due dates."
-                  checked={profile.notifications.reminders}
-                  onChange={(value) => updateNotificationField('reminders', value)}
-                />
-                <Toggle
-                  label="AI insights"
-                  description="Recommendations on what to study next."
-                  checked={profile.notifications.aiInsights}
-                  onChange={(value) => updateNotificationField('aiInsights', value)}
-                />
-                <Toggle
-                  label="Product updates"
-                  description="Occasional email when we launch major features."
-                  checked={profile.notifications.product}
-                  onChange={(value) => updateNotificationField('product', value)}
-                />
-              </div>
-            </div>
-
             {profileError && (
               <p className="form-error" role="alert">
                 {profileError}
@@ -396,93 +336,8 @@ function Settings() {
                 Reset
               </button>
             </div>
-          </form>
-        )}
-      </section>
-
-      {/* <section className="settings-card">
-        <header className="settings-header">
-          <div>
-            <p className="settings-eyebrow">Integrations</p>
-            <h3>Connect tools that supercharge your plan</h3>
-            <p className="settings-subtitle">Add API keys and calendar sync preferences.</p>
-          </div>
-          <span className="settings-status">{integrations.syncCalendar ? 'Calendar syncing' : 'Manual sync'}</span>
-        </header>
-
-        {integrationLoading ? (
-          <div className="task-state">Loading integrations…</div>
-        ) : (
-          <form className="settings-form" onSubmit={saveIntegrations}>
-            <IntegrationField
-              label="Gemini API key"
-              placeholder="SK-XXXX..."
-              value={integrations.geminiKey}
-              onChange={(value) => updateIntegrationField('geminiKey', value.trim())}
-              masked
-              helper="Stored securely with your StudyPal account."
-            />
-
-            <IntegrationField
-              label="Calendar webhook secret"
-              placeholder="calendar-secret..."
-              value={integrations.calendarKey}
-              onChange={(value) => updateIntegrationField('calendarKey', value.trim())}
-              masked
-              helper="Used to authenticate StudyPal when pushing events."
-            />
-
-            <div className="settings-section">
-              <p className="section-label">Scheduling</p>
-              <div className="toggle-grid">
-                <Toggle
-                  label="Sync focus blocks to calendar"
-                  description="Creates events for each AI generated study block."
-                  checked={integrations.syncCalendar}
-                  onChange={(value) => updateIntegrationField('syncCalendar', value)}
-                />
-                <Toggle
-                  label="Auto-push new tasks"
-                  description="Automatically send high priority tasks to your calendar."
-                  checked={integrations.autoPushTasks}
-                  onChange={(value) => updateIntegrationField('autoPushTasks', value)}
-                />
-              </div>
-            </div>
-
-            {integrationError && (
-              <p className="form-error" role="alert">
-                {integrationError}
-              </p>
-            )}
-
-            {integrationNotice && (
-              <p className="settings-success" role="status">
-                {integrationNotice}
-              </p>
-            )}
-
-            <div className="form-actions">
-              <button type="submit" className="primary-btn" disabled={!integrationsDirty || integrationSaving}>
-                {integrationSaving ? 'Saving…' : 'Save integrations'}
-              </button>
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => {
-                  setIntegrations(initialIntegrations)
-                  setIntegrationError(null)
-                  setIntegrationNotice(null)
-                }}
-                disabled={!integrationsDirty || integrationSaving}
-              >
-                Reset
-              </button>
-            </div>
-          </form>
-        )}
-      </section> */}
-      </div>
+        </form>
+      )}
     </div>
   )
 }
