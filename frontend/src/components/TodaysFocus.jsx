@@ -83,6 +83,7 @@ function TodaysFocus() {
         body: JSON.stringify({ status: 'completed' })
       })
       setTasks((prev) => prev.filter((task) => task.id !== taskId))
+      window.dispatchEvent(new Event('tasks:updated'))
     } catch (err) {
       setError(err.message)
     } finally {

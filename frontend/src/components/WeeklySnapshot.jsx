@@ -1,33 +1,54 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiRequest } from '../utils/api.js'
 
 function WeeklySnapshot() {
   const [snapshot, setSnapshot] = useState(null)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState(null)
+  const abortRef = useRef(null)
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadSnapshot() {
-      setStatus('loading')
-      setError(null)
-      try {
-        const response = await apiRequest('/api/stats/overview', { signal: controller.signal })
-        if (!response.ok) throw new Error(`Request failed (${response.status})`)
-        setSnapshot(await response.json())
-        setStatus('success')
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          setError(err.message || 'Unable to load stats')
-          setStatus('error')
-        }
-      }
+  const loadSnapshot = useCallback(async () => {
+    if (abortRef.current) {
+      abortRef.current.abort()
     }
 
-    loadSnapshot()
-    return () => controller.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setStatus('loading')
+    setError(null)
+
+    try {
+      const response = await apiRequest('/api/stats/overview', { signal: controller.signal })
+      if (!response.ok) throw new Error(`Request failed (${response.status})`)
+      setSnapshot(await response.json())
+      setStatus('success')
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Unable to load stats')
+        setStatus('error')
+      }
+    }
   }, [])
+
+  useEffect(() => {
+    loadSnapshot()
+
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort()
+      }
+    }
+  }, [loadSnapshot])
+
+  useEffect(() => {
+    const handleTasksUpdated = () => {
+      loadSnapshot()
+    }
+
+    window.addEventListener('tasks:updated', handleTasksUpdated)
+    return () => window.removeEventListener('tasks:updated', handleTasksUpdated)
+  }, [loadSnapshot])
 
   if (status === 'loading') {
     return (

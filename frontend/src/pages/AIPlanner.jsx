@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useAuthContext } from '../context/AuthContext.jsx'
 import { apiCall } from '../utils/api.js'
 
 const FOCUS_OPTIONS = [
@@ -39,6 +40,8 @@ const DEFAULT_PREFERENCES = {
 
 const PLAN_STORAGE_KEY = 'studypal_ai_plan'
 const PREFS_STORAGE_KEY = 'studypal_ai_preferences'
+
+const buildStorageKey = (base, userId) => (userId ? `${base}_${userId}` : base)
 
 function loadFromStorage(key, fallback = null) {
   if (typeof window === 'undefined') return fallback
@@ -153,11 +156,45 @@ function normalizePlan(apiResponse, preferences) {
 }
 
 function AIPlanner() {
-  const [preferences, setPreferences] = useState(() => loadFromStorage(PREFS_STORAGE_KEY, DEFAULT_PREFERENCES))
-  const [plan, setPlan] = useState(() => loadFromStorage(PLAN_STORAGE_KEY, null))
+  const { user } = useAuthContext()
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES)
+  const [plan, setPlan] = useState(null)
   const [planLoading, setPlanLoading] = useState(false)
   const [planError, setPlanError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const preferencesRef = useRef(preferences)
+
+  useEffect(() => {
+    preferencesRef.current = preferences
+  }, [preferences])
+
+  useEffect(() => {
+    const prefKey = buildStorageKey(PREFS_STORAGE_KEY, user?.id)
+    const storedPrefs = loadFromStorage(prefKey, DEFAULT_PREFERENCES)
+    setPreferences(storedPrefs ?? DEFAULT_PREFERENCES)
+
+    const planKey = buildStorageKey(PLAN_STORAGE_KEY, user?.id)
+    const storedPlan = loadFromStorage(planKey, null)
+    setPlan(storedPlan ?? null)
+    setPlanError(null)
+    setNotice(null)
+  }, [user])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const prefKey = buildStorageKey(PREFS_STORAGE_KEY, user?.id)
+    localStorage.setItem(prefKey, JSON.stringify(preferences))
+  }, [preferences, user])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const planKey = buildStorageKey(PLAN_STORAGE_KEY, user?.id)
+    if (plan) {
+      localStorage.setItem(planKey, JSON.stringify(plan))
+    } else {
+      localStorage.removeItem(planKey)
+    }
+  }, [plan, user])
 
   const planStats = useMemo(() => {
     if (!plan) {
@@ -187,19 +224,28 @@ function AIPlanner() {
     setPreferences((prev) => ({ ...prev, [key]: value }))
   }, [])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    localStorage.setItem(PREFS_STORAGE_KEY, JSON.stringify(preferences))
-  }, [preferences])
+  const fetchPlan = useCallback(async () => {
+    if (!user) return
+    setPlanLoading(true)
+    setPlanError(null)
+    setNotice(null)
+    try {
+      const data = await apiCall('/api/ai/plan')
+      if (data.plan) {
+        setPlan(normalizePlan(data.plan, preferencesRef.current))
+      } else {
+        setPlan(null)
+      }
+    } catch (error) {
+      setPlanError(error.message ?? 'Unable to load saved plan.')
+    } finally {
+      setPlanLoading(false)
+    }
+  }, [user])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (plan) {
-      localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plan))
-    } else {
-      localStorage.removeItem(PLAN_STORAGE_KEY)
-    }
-  }, [plan])
+    fetchPlan()
+  }, [fetchPlan])
 
   const validatePreferences = () => {
     if (!preferences.focusAreas.length) {

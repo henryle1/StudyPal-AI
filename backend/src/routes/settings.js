@@ -128,12 +128,22 @@ router.put('/profile', authenticate, async (req, res, next) => {
     const { fullName, email, timezone, pronouns, notifications } = req.body ?? {}
     const userId = req.user.id
 
+    const account = await fetchUserAccount(userId)
+
+    if (!account) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
     if (!fullName || !fullName.trim()) {
       return res.status(400).json({ error: 'Full name is required' })
     }
 
-    if (!email || !EMAIL_REGEX.test(email)) {
-      return res.status(400).json({ error: 'A valid email is required' })
+    // Lock email edits from settings UI
+    const incomingEmail = typeof email === 'string' ? email.trim().toLowerCase() : account.email.toLowerCase()
+    const storedEmail = account.email.toLowerCase()
+
+    if (incomingEmail !== storedEmail) {
+      return res.status(400).json({ error: 'Email cannot be changed from settings. Contact support if needed.' })
     }
 
     const normalizedNotifications = normalizeNotifications(notifications)
@@ -141,7 +151,7 @@ router.put('/profile', authenticate, async (req, res, next) => {
 
     await db.query('update users set name = $1, email = $2 where id = $3', [
       fullName.trim(),
-      email.toLowerCase(),
+      storedEmail,
       userId
     ])
 

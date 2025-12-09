@@ -271,9 +271,10 @@ function Settings() {
               <input
                 type="email"
                 value={profile.email}
-                onChange={(event) => updateProfileField('email', event.target.value)}
+                disabled
                 placeholder="you@example.com"
               />
+              <small style={{ color: '#6b7280' }}>Email is locked. Contact support to change it.</small>
             </label>
 
             <label className="settings-field">

@@ -1,16 +1,17 @@
 const express = require('express')
 
 const { query } = require('../db')
+const authenticate = require('../middleware/auth')
 
 const XP_PER_COMPLETION = 60
 const XP_PER_LEVEL = 600
 
 const router = express.Router()
 
-router.get('/overview', async (_req, res) => {
+router.get('/overview', authenticate, async (req, res) => {
   try {
     const today = startOfDay(new Date())
-    const tasks = await fetchTasksWithCompletion()
+    const tasks = await fetchTasksWithCompletion(req.user.id)
 
     const weeklyProgress = buildWeeklyProgress(tasks, today)
     const totals = calculateTotals(tasks, today)
@@ -48,7 +49,7 @@ router.get('/overview', async (_req, res) => {
   }
 })
 
-async function fetchTasksWithCompletion() {
+async function fetchTasksWithCompletion(userId) {
   const sql = `
     select
       t.id,
@@ -69,9 +70,10 @@ async function fetchTasksWithCompletion() {
       order by th.changed_at desc
       limit 1
     ) as latest_completion on true
+    where t.user_id = $1
   `
 
-  const { rows } = await query(sql)
+  const { rows } = await query(sql, [userId])
 
   return rows.map((row) => {
     const estimatedHours =
