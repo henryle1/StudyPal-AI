@@ -33,7 +33,7 @@ function createApp() {
   app.use(express.static(publicDir))
 
   // SPA fallback - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
+  app.use((req, res) => {
     // Return 404 JSON for API routes
     if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
       return res.status(404).json({ error: 'Route not yet implemented' })
