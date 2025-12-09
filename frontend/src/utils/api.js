@@ -5,7 +5,13 @@ import { API_URL } from '../config.js'
  */
 function getToken() {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('token')
+
+  // Prefer per-tab session storage so different tabs can use different accounts
+  const sessionToken = window.sessionStorage.getItem('token')
+  if (sessionToken) return sessionToken
+
+  // Fallback for legacy tokens that might still be in localStorage
+  return window.localStorage.getItem('token')
 }
 
 /**
@@ -71,4 +77,3 @@ export async function apiCall(endpoint, options = {}) {
 
   return data
 }
-

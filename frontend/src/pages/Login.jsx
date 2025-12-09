@@ -29,8 +29,9 @@ function Login() {
         body: JSON.stringify(form),
       })
 
-      // Store token in localStorage
-      localStorage.setItem('token', data.token)
+      // Store token in sessionStorage so each tab can stay isolated
+      sessionStorage.setItem('token', data.token)
+      localStorage.removeItem('token')
 
       // Update auth context
       login(data.user)

@@ -3,11 +3,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 const AuthContext = createContext()
 
 const AUTH_STORAGE_KEY = 'studypal_auth_user'
+const TOKEN_KEY = 'token'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY)
+      if (typeof window === 'undefined') return null
+
+      const stored =
+        window.sessionStorage.getItem(AUTH_STORAGE_KEY) ??
+        window.localStorage.getItem(AUTH_STORAGE_KEY)
       return stored ? JSON.parse(stored) : null
     } catch {
       return null
@@ -15,10 +20,15 @@ export function AuthProvider({ children }) {
   })
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     if (user) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+      window.sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
+      // Ensure any legacy localStorage copy is cleared
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
     } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY)
+      window.sessionStorage.removeItem(AUTH_STORAGE_KEY)
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
     }
   }, [user])
 
@@ -31,7 +41,16 @@ export function AuthProvider({ children }) {
     setUser((prev) => ({ ...(prev ?? {}), ...(partialUser ?? {}) }))
   }, [])
 
-  const logout = useCallback(() => setUser(null), [])
+  const logout = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      // Clear stored auth data and token for this tab
+      window.sessionStorage.removeItem(TOKEN_KEY)
+      window.localStorage.removeItem(TOKEN_KEY)
+      window.sessionStorage.removeItem(AUTH_STORAGE_KEY)
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
+    }
+    setUser(null)
+  }, [])
 
   const value = useMemo(
     () => ({
